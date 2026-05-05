@@ -25,7 +25,7 @@ class TreinStappenPlanner {
             case Onderweg onderweg -> {
                 var nieuwePositie = onderweg.vooruitVoorEenMinuut(status.trein());
                 if (nieuwePositie instanceof OpStation || nieuwePositie instanceof OpStationMaarStoptNiet) {
-                    logger.info(status.trein() + " nu bij een station, verbinding vrij");
+                    logger.fine(status.trein() + " nu bij een station, verbinding vrij");
                     netwerk.geefVerbindingTerug(onderweg.verbinding());
                 }
                 misschienNieuwePositie = Optional.of(nieuwePositie);
@@ -38,12 +38,12 @@ class TreinStappenPlanner {
             }
 
             case EindBestemmingBereikt _ -> {
-                logger.info(status.trein() + " nu op eind bestemming.");
+                logger.fine(status.trein() + " nu op eind bestemming.");
                 return status;
             }
 
             case OpStationMaarStoptNiet opStationMaarStoptNiet -> {
-                logger.info(status.trein() + " gaat door " + opStationMaarStoptNiet.station());
+                logger.fine(status.trein() + " gaat door " + opStationMaarStoptNiet.station());
                 misschienNieuwePositie = probeerOpVerbindingTeKomen(
                         status.trein(),
                         opStationMaarStoptNiet.station(),
@@ -55,7 +55,7 @@ class TreinStappenPlanner {
         return misschienNieuwePositie
                 .map(nieuwPositie -> new TreinStatus(status.trein(), nieuwPositie, status.minutenVertraging()))
                 .orElseGet(() -> {
-                    logger.info(status.trein() + " is vertraagd!");
+                    logger.fine(status.trein() + " is vertraagd!");
                     return new TreinStatus(status.trein(), status.treinPositie(), status.minutenVertraging() + 1);
                 });
 

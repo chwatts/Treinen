@@ -44,7 +44,7 @@ public class TreinSimulatie {
     public void run() {
         logger.info(" Simulatie aan het starten");
         while (geheelStatus.tijd().isBefore(eindExclusiefSimulatieTijd) && !geheelStatus.alleTreinenOpEindbestemming()) {
-            logger.info(() -> """
+            logger.fine(() -> """
                     Tijd: %s
                     TreinStatuses:
                     %s
