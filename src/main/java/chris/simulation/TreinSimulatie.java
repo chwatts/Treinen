@@ -12,23 +12,23 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 
-public class TreinSimulation {
-    private final Logger logger = Logger.getLogger(TreinSimulation.class.getName());
+public class TreinSimulatie {
+    private final Logger logger = Logger.getLogger(TreinSimulatie.class.getName());
 
     private final LocalTime eindExclusiefSimulatieTijd;
 
     private final TreinStappenPlanner treinStappenPlanner;
 
-    // This will change every minute tick
+    // Elke minuut wordt dit bijgewerkt
     private GeheelStatus geheelStatus;
 
     private final GeheelStatusObserver geheelStatusObserver;
 
-    public TreinSimulation(@NonNull List<Trein> treinen, @NonNull Netwerk netwerk, @NonNull GeheelStatusObserver geheelStatusObserver) {
-      this(treinen, new TreinStappenPlanner(netwerk), LocalTime.MIDNIGHT, LocalTime.MAX, geheelStatusObserver) ;
+    public TreinSimulatie(@NonNull List<Trein> treinen, @NonNull Netwerk netwerk, @NonNull GeheelStatusObserver geheelStatusObserver) {
+        this(treinen, new TreinStappenPlanner(netwerk), LocalTime.MIDNIGHT, LocalTime.MAX, geheelStatusObserver);
     }
 
-    TreinSimulation(@NonNull List<Trein> treinen, @NonNull TreinStappenPlanner treinStappenPlanner, LocalTime startSimulatieTijd, LocalTime eindExclusiefSimulatieTijd, GeheelStatusObserver geheelStatusObserver) {
+    TreinSimulatie(@NonNull List<Trein> treinen, @NonNull TreinStappenPlanner treinStappenPlanner, LocalTime startSimulatieTijd, LocalTime eindExclusiefSimulatieTijd, GeheelStatusObserver geheelStatusObserver) {
         if (treinen.isEmpty()) throw new IllegalArgumentException("Moet tenminste een trein zijn");
         this.treinStappenPlanner = treinStappenPlanner;
         this.geheelStatusObserver = geheelStatusObserver;
@@ -49,22 +49,25 @@ public class TreinSimulation {
                     TreinStatuses:
                     %s
                     """.formatted(
-                            geheelStatus.tijd(),
+                    geheelStatus.tijd(),
                     geheelStatus.treinStatuses().stream().map(Record::toString).collect(Collectors.joining("\n"))
             ));
 
-            var newPosities = geheelStatus.treinStatuses()
+            var futuresVanNiewuePosities = geheelStatus.treinStatuses()
                     .stream()
                     .map(treinStappenPlanner::beginAsyncVolgendePostieBerekenen)
-                    .map(x -> {
+                    .toList();
+
+            // Berekening begonnen...
+
+            var newPosities = futuresVanNiewuePosities.stream().map(f -> {
                         try {
-                            return x.get(100, TimeUnit.MILLISECONDS);
+                            return f.get(100, TimeUnit.MILLISECONDS);
                         } catch (InterruptedException | ExecutionException | TimeoutException e) {
                             throw new RuntimeException(e);
                         }
                     })
                     .toList();
-
 
             geheelStatus = geheelStatus.nieuwPosities(newPosities);
 

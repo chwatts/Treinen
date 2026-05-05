@@ -10,16 +10,17 @@ public record Onderweg(@NonNull Verbinding verbinding, int afstandKm, @NonNull S
             throw new IllegalArgumentException("Afstand mag niet groter dan " + verbinding.afstandKm() + " km zijn");
     }
 
-    /**
+    /*
      * De trein is onderweg, dit berekent waar de trein is na een minuut.
-     * @param trein
-     * @return
      */
     public @NonNull TreinPositie vooruitVoorEenMinuut(@NonNull Trein trein) {
         int snelheidKmPerMin = verbinding.werkelijkSnelheid(trein.soort().snelheidKmPerMin);
 
         int afstandNaMinuut = snelheidKmPerMin + afstandKm;
 
+        // Als de trein kan het volgende station bereiken, of nog verder gaan,
+        // zal de trein altijd stoppen ook als het eigenlijk niet hoeft om het
+        // eenvoudiger te maken.
         if (afstandNaMinuut >= verbinding.afstandKm()) {
             if (trein.route().contains(verbinding.naar())) {
                 return new OpStation(verbinding.naar());

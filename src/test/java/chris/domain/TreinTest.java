@@ -35,4 +35,11 @@ class TreinTest {
 
         assertEquals(Optional.of(Station.UTRECHT), trein.volgendeStation(Station.WEESP));
     }
+
+    @Test
+    void volgendeStationOpEersteStopGeeftTussenStop() {
+        var trein = new Trein(TreinSoort.INTERCITY, List.of(Station.AMSTERDAM, Station.WEESP, Station.UTRECHT));
+
+        assertEquals(Optional.of(Station.WEESP), trein.volgendeStation(Station.AMSTERDAM));
+    }
 }

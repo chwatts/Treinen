@@ -8,6 +8,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Een netwerk bestaat uit meerdere verbindingen tussen stations.
+ * Het netwerk garandeert dat een verbinding uitsluitend voor een trein is.
+ * Het kan ook berekenen wat snelste route is tussen stations, het gebruikt het algoritme van Dijkstra voor dit.
+ */
 public class Netwerk {
     private final List<Verbinding> verbindingen;
 
@@ -15,7 +20,15 @@ public class Netwerk {
 
     public Netwerk(@NonNull List<Verbinding> verbindingen) {
         this.verbindingen = verbindingen;
-        this.verbindingSloten = verbindingen.stream().collect(Collectors.toMap(Function.identity(), v -> new Semaphore(1)));
+        this.verbindingSloten = verbindingen.stream().collect(Collectors.toMap(Function.identity(), _ -> new Semaphore(1)));
+    }
+
+    public boolean pakVerbinding(Verbinding verbinding) {
+        return verbindingSloten.get(verbinding).tryAcquire();
+    }
+
+    public void geefVerbindingTerug(Verbinding verbinding) {
+        verbindingSloten.get(verbinding).release();
     }
 
     public List<Verbinding> bestRoute(@NonNull Station van, @NonNull Station naar, int maxSnelheidTreinKmPerMin) {
@@ -94,12 +107,4 @@ public class Netwerk {
         return verbindingen.stream().filter( verbinding -> verbinding.van() == van);
     }
 
-
-    public boolean pakVerbinding(Verbinding verbinding) {
-        return verbindingSloten.get(verbinding).tryAcquire();
-    }
-
-    public void geefVerbindingTerug(Verbinding verbinding) {
-        verbindingSloten.get(verbinding).release();
-    }
 }

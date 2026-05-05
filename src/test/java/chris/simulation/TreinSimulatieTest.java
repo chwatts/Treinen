@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
 
 import static org.mockito.Mockito.*;
 
-class TreinSimulationTest {
+class TreinSimulatieTest {
     private static final int HOUR = 10;
     private static final int START_MINUUT = 30;
     private final int nummerStappen = 3;
@@ -24,7 +24,7 @@ class TreinSimulationTest {
     private final Trein trein1 = new Trein(TreinSoort.INTERCITY, List.of(Station.AMSTERDAM, Station.WEESP, Station.ALMERE));
     private final Trein trein2 = new Trein(TreinSoort.SPRINTER, List.of(Station.HILVERSUM, Station.WEESP));
 
-    private final TreinSimulation victim = new TreinSimulation(
+    private final TreinSimulatie victim = new TreinSimulatie(
             List.of(trein1, trein2),
             mockTreinStappenPlanner,
             tijd(START_MINUUT),
@@ -38,7 +38,7 @@ class TreinSimulationTest {
     // volgorde moet consequent blijven zodat de tests kloppen, daarom LinkedHashMap
     final Map<Trein, List<TreinPositie>> expectedStatuses = new LinkedHashMap<>();
 
-    TreinSimulationTest() {
+    TreinSimulatieTest() {
         expectedStatuses.put(
                 trein1,
                 List.of(

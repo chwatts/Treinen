@@ -2,8 +2,8 @@ package chris.simulation;
 
 import chris.domain.*;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
 
@@ -20,7 +20,7 @@ class TreinStappenPlanner {
     }
 
     @NonNull TreinStatus berekenVolgendePositie(@NonNull TreinStatus status) {
-        final TreinPositie misschienNieuwePositie;
+        final Optional<TreinPositie> misschienNieuwePositie;
         switch (status.treinPositie()) {
             case Onderweg onderweg -> {
                 var nieuwePositie = onderweg.vooruitVoorEenMinuut(status.trein());
@@ -28,15 +28,13 @@ class TreinStappenPlanner {
                     logger.info(status.trein() + " nu bij een station, verbinding vrij");
                     netwerk.geefVerbindingTerug(onderweg.verbinding());
                 }
-                misschienNieuwePositie = nieuwePositie;
+                misschienNieuwePositie = Optional.of(nieuwePositie);
             }
             case OpStation opStation -> {
                 var volgend = status.trein().volgendeStation(opStation.station());
-                if (volgend.isEmpty()) {
-                    misschienNieuwePositie = new EindBestemmingBereikt(opStation.station());
-                } else {
-                    misschienNieuwePositie = probeerOpVerbindingTeKomen(status.trein(), opStation.station(), volgend.get());
-                }
+                misschienNieuwePositie = volgend
+                        .map(station -> probeerOpVerbindingTeKomen(status.trein(), opStation.station(), station))
+                        .orElse(Optional.of(new EindBestemmingBereikt(opStation.station())));
             }
 
             case EindBestemmingBereikt _ -> {
@@ -53,24 +51,25 @@ class TreinStappenPlanner {
                 );
             }
         }
-        boolean isVertraagd = misschienNieuwePositie == null;
-        if (isVertraagd) {
-            logger.info(status.trein() + " is vertraagd!");
-            return new TreinStatus(status.trein(), status.treinPositie(), status.minutenVertraging() + 1);
-        } else {
-            return new TreinStatus(status.trein(), misschienNieuwePositie, status.minutenVertraging());
-        }
+
+        return misschienNieuwePositie
+                .map(nieuwPositie -> new TreinStatus(status.trein(), nieuwPositie, status.minutenVertraging()))
+                .orElseGet(() -> {
+                    logger.info(status.trein() + " is vertraagd!");
+                    return new TreinStatus(status.trein(), status.treinPositie(), status.minutenVertraging() + 1);
+                });
+
     }
 
-    private @Nullable TreinPositie probeerOpVerbindingTeKomen(@NonNull Trein trein, @NonNull Station station, @NonNull Station bestemming) {
+    private @NonNull Optional<TreinPositie> probeerOpVerbindingTeKomen(@NonNull Trein trein, @NonNull Station station, @NonNull Station bestemming) {
         final var verbindingen = netwerk.bestRoute(station, bestemming, trein.soort().snelheidKmPerMin);
         if (verbindingen.isEmpty()) throw new IllegalStateException("Geen route van " + station + " naar " + bestemming);
         var eerstVerbinding = verbindingen.getFirst();
         if (netwerk.pakVerbinding(eerstVerbinding)) {
             Onderweg onderweg = new Onderweg(eerstVerbinding, 0, bestemming);
-            return onderweg.vooruitVoorEenMinuut(trein);
+            return Optional.of(onderweg.vooruitVoorEenMinuut(trein));
         }
-        return null;
+        return Optional.empty();
     }
 
 }

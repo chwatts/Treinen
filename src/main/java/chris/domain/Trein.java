@@ -22,7 +22,13 @@ public record Trein(@NonNull TreinSoort soort, @NonNull List<Station> route) {
     }
 
     public @NonNull Optional<Station> volgendeStation(@NonNull Station station) {
-        if (station == route.getLast()) return Optional.empty();
-        return Optional.of(route.getLast());
+        int stapNummer = route.indexOf(station);
+        if (stapNummer < 0) {
+            throw new IllegalArgumentException(station + " staat niet in de route");
+        }
+        if (stapNummer == route.size() - 1) {
+            return Optional.empty();
+        }
+        return Optional.of(route.get(stapNummer + 1));
     }
 }
