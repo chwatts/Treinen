@@ -9,6 +9,7 @@ import java.util.Optional;
  *
  * @param soort
  * @param route De stations die de trein in volgorde aandoet, van beginstation naar eindstation.
+ *
  */
 public record Trein(@NonNull TreinSoort soort, @NonNull List<Station> route) {
     public Trein {
@@ -21,7 +22,13 @@ public record Trein(@NonNull TreinSoort soort, @NonNull List<Station> route) {
         return soort.name() + "[" + route.getFirst() + " -> " + route.getLast() + "]";
     }
 
-    public @NonNull Optional<Station> volgendeStation(@NonNull Station station) {
+    /**
+     * Geef het volgende station na deze op de route van de trein
+     * @param station Huidig station
+     * @return Het volgende station, als de trein al op zijn eind bestemming is, dan is `empty()` het resultaat.
+     * @throws IllegalArgumentException Als een station is gegeven dat niet in de route staat,
+     */
+    public @NonNull Optional<Station> volgendStation(@NonNull Station station) {
         int stapNummer = route.indexOf(station);
         if (stapNummer < 0) {
             throw new IllegalArgumentException(station + " staat niet in de route");

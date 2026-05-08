@@ -12,7 +12,7 @@ Een Java-simulatie van treinplanning op een klein spoorwegnetwerk. De simulatie 
   └────────────────────────────── UTRECHT
 ```
 
-Zeven gerichte verbindingen, elk met een afstand (km) en maximumsnelheid (km/min). Zes treinen rijden tegelijkertijd — een mix van Sprinters en Intercity's.
+Zeven gerichte verbindingen, elk met een afstand (km) en maximumsnelheid (km/min). Acht treinen rijden tegelijkertijd — een mix van Sprinters en Intercity's.
 
 ## Ontwerp
 

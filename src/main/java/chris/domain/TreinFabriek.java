@@ -2,6 +2,9 @@ package chris.domain;
 
 import java.util.List;
 
+/**
+ * Maakt treinen voor de simulatie
+ */
 public class TreinFabriek {
 
     private TreinFabriek() {}
@@ -16,8 +19,6 @@ public class TreinFabriek {
                 new Trein(TreinSoort.INTERCITY, List.of(Station.ALMERE, Station.AMSTERDAM)),
                 new Trein(TreinSoort.INTERCITY,  List.of(Station.ALMERE, Station.AMERSFOORT)),
                 new Trein(TreinSoort.INTERCITY,  List.of(Station.WEESP, Station.UTRECHT))
-
-
                 );
     }
 }

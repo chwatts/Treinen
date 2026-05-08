@@ -1,6 +1,7 @@
 package chris.simulation;
 
 import chris.domain.*;
+import chris.domain.treinpositie.OpStation;
 import org.jspecify.annotations.NonNull;
 
 import java.time.LocalTime;
@@ -12,6 +13,10 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 
+/**
+ * Simulatie van treinen de draait op een dag.
+ * Elke minuut wordt de nieuwe posities van de treinen berekent.
+ */
 public class TreinSimulatie {
     private final Logger logger = Logger.getLogger(TreinSimulatie.class.getName());
 

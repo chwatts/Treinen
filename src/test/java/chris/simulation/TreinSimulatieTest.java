@@ -2,6 +2,10 @@ package chris.simulation;
 
 
 import chris.domain.*;
+import chris.domain.treinpositie.EindBestemmingBereikt;
+import chris.domain.treinpositie.Onderweg;
+import chris.domain.treinpositie.OpStation;
+import chris.domain.treinpositie.TreinPositie;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalTime;

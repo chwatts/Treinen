@@ -1,6 +1,6 @@
 package chris.simulation;
 
-import chris.domain.EindBestemmingBereikt;
+import chris.domain.treinpositie.EindBestemmingBereikt;
 import chris.domain.TreinStatus;
 import org.jspecify.annotations.NonNull;
 
@@ -13,7 +13,7 @@ public record GeheelStatus(@NonNull LocalTime tijd, @NonNull List<TreinStatus> t
         if (treinStatuses.isEmpty()) throw new IllegalArgumentException("Moet tenminste een trein zijn");
     }
 
-    public GeheelStatus nieuwPosities(List<TreinStatus> nieuwPosities) {
+    public @NonNull GeheelStatus nieuwPosities(@NonNull List<TreinStatus> nieuwPosities) {
         return new GeheelStatus(tijd.plus(Duration.ofMinutes(1)), nieuwPosities);
     }
 

@@ -1,7 +1,14 @@
-package chris.domain;
+package chris.domain.treinpositie;
 
+import chris.domain.*;
 import org.jspecify.annotations.NonNull;
 
+/**
+ * Trein is onderweg op verbinding
+ * @param verbinding Verbinding waarop de trein rijdt
+ * @param afstandKm Hoe ver langs de verbinding is de trein
+ * @param bestemming De volgende station waar de trein eigenlijk stopt (dit is misschien het eind station van de verbinding niet)
+ */
 public record Onderweg(@NonNull Verbinding verbinding, int afstandKm, @NonNull Station bestemming) implements TreinPositie {
 
     public Onderweg {

@@ -1,11 +1,19 @@
 package chris;
 
 import chris.domain.*;
+import chris.domain.treinpositie.EindBestemmingBereikt;
+import chris.domain.treinpositie.Onderweg;
+import chris.domain.treinpositie.OpStation;
+import chris.domain.treinpositie.OpStationMaarStoptNiet;
 import chris.simulation.GeheelStatus;
 import chris.simulation.GeheelStatusObserver;
 import chris.simulation.TreinSimulatie;
 import org.jspecify.annotations.NonNull;
 
+/**
+ * Deze probeert de status van de treinen te laten zien.
+ * Meestal door AI gemaakt helaas, en niet echt getest, meer voor de gein.
+ */
 class Observer implements GeheelStatusObserver {
     private static final String RESET = "\033[0m";
     private static final String GROEN = "\033[32m";

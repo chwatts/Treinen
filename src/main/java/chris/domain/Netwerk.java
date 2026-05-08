@@ -31,80 +31,98 @@ public class Netwerk {
         verbindingSloten.get(verbinding).release();
     }
 
-    public List<Verbinding> bestRoute(@NonNull Station van, @NonNull Station naar, int maxSnelheidTreinKmPerMin) {
-        var reverseSnelsteRouteNaarElkStation = berekenSnelsteRoutesNaarElkStation(van, naar, maxSnelheidTreinKmPerMin);
+    /**
+     * Berekent de beste route, als er geen route is dan de List leeg.
+     * @param begin Begin Station
+     * @param eind Eind Station
+     * @param maxSnelheidTreinKmPerMin Hoe snel de trein kan rijden
+     * @return Een List met al de verbindingen nodig om van 'van' naar 'naar' te rijden
+     */
+    public @NonNull List<Verbinding> bestRoute(@NonNull Station begin, @NonNull Station eind, int maxSnelheidTreinKmPerMin) {
+        var stationsMetLaatsteVerbindingVanSnelsteRoute = berekenSnelsteRoutesNaarElkStation(begin, eind, maxSnelheidTreinKmPerMin);
 
-        return reverseSnelsteRouteNaarElkStation
-                .map(verbindingMap -> vindWerkelijkeRoute(verbindingMap, van, naar))
+        return stationsMetLaatsteVerbindingVanSnelsteRoute
+                .map(verbindingMap -> vindWerkelijkeRoute(verbindingMap, begin, eind))
                 .orElse(Collections.emptyList());
     }
 
-    private List<Verbinding> vindWerkelijkeRoute(Map<Station, Verbinding> reverseSnelsteRouteNaarElkStation, @NonNull Station van, @NonNull Station naar) {
-        Station current = naar;
-        List<Verbinding> reverseRoute = new ArrayList<>();
-        while (current != van) {
-            Verbinding verbinding = reverseSnelsteRouteNaarElkStation.get(current);
-            reverseRoute.add(verbinding);
+    private @NonNull List<Verbinding> vindWerkelijkeRoute(
+            @NonNull Map<Station, Verbinding> stationsMetLaatsteVerbindingVanSnelsteRoute,
+            @NonNull Station begin,
+            @NonNull Station eind) {
+        // Omdat wij alleen de laatste verbindingen hebben, moeten achteruit, van het laatste station naar het begin
+        // wij volgen de Verbindingen achteruit
+        Station current = eind;
+        List<Verbinding> achteruitRoute = new ArrayList<>();
+        while (current != begin) {
+            Verbinding verbinding = stationsMetLaatsteVerbindingVanSnelsteRoute.get(current);
+            achteruitRoute.add(verbinding);
             current = verbinding.van();
         }
 
-        return reverseRoute.reversed();
+        return achteruitRoute.reversed();
     }
 
-    private @NonNull Optional<Map<Station, Verbinding>> berekenSnelsteRoutesNaarElkStation(@NonNull Station van, @NonNull Station naar, int maxSnelheidTreinKmPerMin) {
-        // Algoritme van Dijkstra -> snelste route van A naar B
-        // Dit wordt gewijzigd alleen een keer per station, als wij een station tegenkom, de eerste keer wij het tegenkom is
-        // altijd de snelste.
-        Map<Station, Integer> tijdNaarStations =
+    private @NonNull Optional<Map<Station, Verbinding>> berekenSnelsteRoutesNaarElkStation(
+            @NonNull Station begin,
+            @NonNull Station eind,
+            int maxSnelheidTreinKmPerMin) {
+        // Algoritme van Dijkstra -> snelste route van `begin` naar `eind`
+
+        // De Map waar wij verzamelen de snelste minuten dat wij vinden naar elk station
+        final Map<Station, Integer> minutenNaarStations =
                 Arrays.stream(Station.values()).collect(Collectors.toMap(
                         Function.identity(),
                         (station) -> {
-                            if (station == van) return 0;
+                            if (station == begin) return 0;
                             else return Integer.MAX_VALUE;
                         })
                 );
 
-        final Map<Station, Verbinding> reverseSnelsteRoute = new HashMap<>();
-        // Dit verzekers dat wij de snelste routes altijd volgen, en dat wij op elk station de eerste bezoek
-        // is altijd de snelste
-        final PriorityQueue<Station> stationsMetSnelsteEerst = new PriorityQueue<>(
-                Comparator.comparing(tijdNaarStations::get)
+        // Dit is een map van elk station en de laatste verbinding die ernaartoe rijdt, die deel is van een snelste route
+        final Map<Station, Verbinding> snelsteRouteStationEnLaatsteVerbinding = new HashMap<>();
+
+        // Wij gaan door elk station in het netwerk, maar in volgorde van snelste eerst
+        // Dat betekent dat als wij het station nemen van deze queue, dan zijn er geen andere sneller manieren om hier te komen
+        final PriorityQueue<StationEnTijd> stationsMetSnelsteEerst = new PriorityQueue<>(
+                Comparator.comparing(StationEnTijd::minuten)
         );
-        final Set<Station> stationsGeweest = new HashSet<>();
-        stationsMetSnelsteEerst.add(van);
+
+        stationsMetSnelsteEerst.add(new StationEnTijd(begin, 0));
 
         while (!stationsMetSnelsteEerst.isEmpty()) {
-            var huidigeStation = stationsMetSnelsteEerst.poll();
-            if (!stationsGeweest.contains(huidigeStation)) {
-                stationsGeweest.add(huidigeStation);
-
-                Stream<Verbinding> verbindingStream = verbindingenVan(huidigeStation);
-                verbindingStream.forEach(verbinding -> {
-                    int tijdNaarStationVanVertrekStation = tijdNaarStations.get(huidigeStation) + minutenNaarBestemming(verbinding, maxSnelheidTreinKmPerMin);
-                    if (tijdNaarStations.get(verbinding.naar()) > tijdNaarStationVanVertrekStation) {
-                        tijdNaarStations.put(verbinding.naar(), tijdNaarStationVanVertrekStation);
-                        reverseSnelsteRoute.put(verbinding.naar(), verbinding);
-                        stationsMetSnelsteEerst.add(verbinding.naar());
-                    }
-                });
+            final var huidigeStationEnTijd = stationsMetSnelsteEerst.poll();
+            if (huidigeStationEnTijd.station() == eind) {
+                // Wij zijn er op de snelste tijd, wij kunnen alvast stoppen!
+                break;
             }
-
+            verbindingenVan(huidigeStationEnTijd.station())
+                    .forEach(verbinding -> {
+                        int minutenNaarStationVanVertrekStation = huidigeStationEnTijd.minuten() + minutenTotEindVerbinding(verbinding, maxSnelheidTreinKmPerMin);
+                        if (minutenNaarStations.get(verbinding.naar()) > minutenNaarStationVanVertrekStation) {
+                            minutenNaarStations.put(verbinding.naar(), minutenNaarStationVanVertrekStation);
+                            snelsteRouteStationEnLaatsteVerbinding.put(verbinding.naar(), verbinding);
+                            stationsMetSnelsteEerst.add(new StationEnTijd(verbinding.naar(), minutenNaarStationVanVertrekStation));
+                        }
+                    });
         }
 
-        if (tijdNaarStations.get(naar) == Integer.MAX_VALUE) {
+        if (minutenNaarStations.get(eind) == Integer.MAX_VALUE) {
             return Optional.empty();
         } else {
-            return Optional.of(reverseSnelsteRoute);
+            return Optional.of(snelsteRouteStationEnLaatsteVerbinding);
         }
     }
 
-    private static int minutenNaarBestemming(Verbinding verbinding, int maxSnelheidTreinKmPerMin) {
+    private static int minutenTotEindVerbinding(Verbinding verbinding, int maxSnelheidTreinKmPerMin) {
         int werkelijkMaxSnelheid = verbinding.werkelijkSnelheid(maxSnelheidTreinKmPerMin);
         return verbinding.afstandKm() / werkelijkMaxSnelheid;
     }
 
-    private Stream<Verbinding> verbindingenVan(@NonNull Station van) {
-        return verbindingen.stream().filter( verbinding -> verbinding.van() == van);
+    private Stream<Verbinding> verbindingenVan(@NonNull Station begin) {
+        return verbindingen.stream().filter(verbinding -> verbinding.van() == begin);
     }
 
+    private record StationEnTijd(Station station, int minuten) {
+    }
 }

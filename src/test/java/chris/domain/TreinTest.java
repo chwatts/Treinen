@@ -16,30 +16,30 @@ class TreinTest {
     }
 
     @Test
-    void volgendeStationOpEersteStationGeeftLaatsteStation() {
+    void volgendStationOpEersteStationGeeftLaatsteStation() {
         var trein = new Trein(TreinSoort.INTERCITY, List.of(Station.AMSTERDAM, Station.WEESP));
 
-        assertEquals(Optional.of(Station.WEESP), trein.volgendeStation(Station.AMSTERDAM));
+        assertEquals(Optional.of(Station.WEESP), trein.volgendStation(Station.AMSTERDAM));
     }
 
     @Test
-    void volgendeStationOpLaatsteStationGeeftLeeg() {
+    void volgendStationOpLaatsteStationGeeftLeeg() {
         var trein = new Trein(TreinSoort.INTERCITY, List.of(Station.AMSTERDAM, Station.WEESP));
 
-        assertEquals(Optional.empty(), trein.volgendeStation(Station.WEESP));
+        assertEquals(Optional.empty(), trein.volgendStation(Station.WEESP));
     }
 
     @Test
-    void volgendeStationOpTussenstopGeeftEindstation() {
+    void volgendStationOpTussenstopGeeftEindstation() {
         var trein = new Trein(TreinSoort.INTERCITY, List.of(Station.AMSTERDAM, Station.WEESP, Station.UTRECHT));
 
-        assertEquals(Optional.of(Station.UTRECHT), trein.volgendeStation(Station.WEESP));
+        assertEquals(Optional.of(Station.UTRECHT), trein.volgendStation(Station.WEESP));
     }
 
     @Test
-    void volgendeStationOpEersteStopGeeftTussenStop() {
+    void volgendStationOpEersteStopGeeftTussenStop() {
         var trein = new Trein(TreinSoort.INTERCITY, List.of(Station.AMSTERDAM, Station.WEESP, Station.UTRECHT));
 
-        assertEquals(Optional.of(Station.WEESP), trein.volgendeStation(Station.AMSTERDAM));
+        assertEquals(Optional.of(Station.WEESP), trein.volgendStation(Station.AMSTERDAM));
     }
 }

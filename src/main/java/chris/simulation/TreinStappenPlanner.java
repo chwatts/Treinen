@@ -1,12 +1,17 @@
 package chris.simulation;
 
 import chris.domain.*;
+import chris.domain.treinpositie.*;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
 
+/**
+ * De Planner berekent de volgende positie van elke trein tegelijk, het gebruikt "Virtual Threads",
+ * meer om het realistischer te maken, dan dat het nodig hier is.
+ */
 class TreinStappenPlanner {
     private final ExecutorService exec = Executors.newVirtualThreadPerTaskExecutor();
     private final @NonNull Netwerk netwerk;
@@ -15,23 +20,18 @@ class TreinStappenPlanner {
         this.netwerk = netwerk;
     }
 
-    @NonNull Future<TreinStatus> beginAsyncVolgendePostieBerekenen(@NonNull  final TreinStatus status) {
+    @NonNull Future<TreinStatus> beginAsyncVolgendePostieBerekenen(@NonNull TreinStatus status) {
         return exec.submit(() -> berekenVolgendePositie(status));
     }
 
     @NonNull TreinStatus berekenVolgendePositie(@NonNull TreinStatus status) {
         final Optional<TreinPositie> misschienNieuwePositie;
         switch (status.treinPositie()) {
-            case Onderweg onderweg -> {
-                var nieuwePositie = onderweg.vooruitVoorEenMinuut(status.trein());
-                if (nieuwePositie instanceof OpStation || nieuwePositie instanceof OpStationMaarStoptNiet) {
-                    logger.fine(status.trein() + " nu bij een station, verbinding vrij");
-                    netwerk.geefVerbindingTerug(onderweg.verbinding());
-                }
-                misschienNieuwePositie = Optional.of(nieuwePositie);
-            }
+            case Onderweg onderweg ->
+                misschienNieuwePositie = berekenNieuwePositieEnGeefVerbindingTerugAlsHetAankomt(status, onderweg);
+
             case OpStation opStation -> {
-                var volgend = status.trein().volgendeStation(opStation.station());
+                var volgend = status.trein().volgendStation(opStation.station());
                 misschienNieuwePositie = volgend
                         .map(station -> probeerOpVerbindingTeKomen(status.trein(), opStation.station(), station))
                         .orElse(Optional.of(new EindBestemmingBereikt(opStation.station())));
@@ -43,7 +43,7 @@ class TreinStappenPlanner {
             }
 
             case OpStationMaarStoptNiet opStationMaarStoptNiet -> {
-                logger.fine(status.trein() + " gaat door " + opStationMaarStoptNiet.station());
+                logger.fine(status.trein() + " rijdt door " + opStationMaarStoptNiet.station());
                 misschienNieuwePositie = probeerOpVerbindingTeKomen(
                         status.trein(),
                         opStationMaarStoptNiet.station(),
@@ -59,6 +59,17 @@ class TreinStappenPlanner {
                     return new TreinStatus(status.trein(), status.treinPositie(), status.minutenVertraging() + 1);
                 });
 
+    }
+
+    private @NonNull Optional<TreinPositie> berekenNieuwePositieEnGeefVerbindingTerugAlsHetAankomt(@NonNull TreinStatus status, @NonNull Onderweg onderweg) {
+        final Optional<TreinPositie> misschienNieuwePositie;
+        var nieuwePositie = onderweg.vooruitVoorEenMinuut(status.trein());
+        if (nieuwePositie instanceof OpStation || nieuwePositie instanceof OpStationMaarStoptNiet) {
+            logger.fine(status.trein() + " nu bij een station, verbinding vrij");
+            netwerk.geefVerbindingTerug(onderweg.verbinding());
+        }
+        misschienNieuwePositie = Optional.of(nieuwePositie);
+        return misschienNieuwePositie;
     }
 
     private @NonNull Optional<TreinPositie> probeerOpVerbindingTeKomen(@NonNull Trein trein, @NonNull Station station, @NonNull Station bestemming) {
